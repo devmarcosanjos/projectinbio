@@ -1,4 +1,6 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 import "server-only";
 
 // Certificado
@@ -20,3 +22,6 @@ if (!getApps().length) {
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   });
 }
+
+export const db = getFirestore();
+export const storage = getStorage().bucket();
