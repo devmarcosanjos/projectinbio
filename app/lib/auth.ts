@@ -1,13 +1,13 @@
-import { firebaseCert } from "@/app/lib/firebase";
-import { FirestoreAdapter } from "@auth/firebase-adapter";
 import NextAuth from "next-auth";
+import { firebaseCert } from "./firebase";
 import Google from "next-auth/providers/google";
+import { FirestoreAdapter } from "@auth/firebase-adapter";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: FirestoreAdapter({
     credential: firebaseCert,
   }),
-  providers: [Google], // Add your providers here
+  providers: [Google],
   events: {},
   callbacks: {},
 });
