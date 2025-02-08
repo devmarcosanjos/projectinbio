@@ -1,9 +1,9 @@
+import NewProjects from "@/app/(pages)/[profileId]/components/new-projects";
 import ProjectCard from "@/app/components/commons/project-card";
 import TotalVisits from "@/app/components/commons/total-visits";
 import UserCard from "@/app/components/commons/user-card";
 import { auth } from "@/app/lib/auth";
 import { getProfileData } from "@/app/server/get-profile-data";
-import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -47,12 +47,7 @@ export default async function ProfilePage({
         <ProjectCard />
         <ProjectCard />
         <ProjectCard />
-        {isOwner && (
-          <button className="w-[340px] h-[132px] rounded-[20px] bg-background-secondary flex items-center justify-center hover:border border-dashed ">
-            <Plus className="size-10 text-accent-green" />
-            <span className="">Novo projeto</span>
-          </button>
-        )}
+        {isOwner && <NewProjects profileId={profileId} />}
       </div>
 
       <div className="absolute bottom-4 right-0 left-0 w-min mx-auto">
