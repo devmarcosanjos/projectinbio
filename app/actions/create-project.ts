@@ -1,24 +1,23 @@
-import { auth } from "@/app/lib/auth";
-import { db, storage } from "@/app/lib/firebase";
-import { profile } from "console";
-import { randomUUID } from "crypto";
+"use server";
+
 import { Timestamp } from "firebase-admin/firestore";
-import { arrayBuffer } from "stream/consumers";
+import { auth } from "../lib/auth";
+import { db, storage } from "../lib/firebase";
+import { randomUUID } from "crypto";
 
 export async function createProject(formData: FormData) {
   const session = await auth();
-
   if (!session) return;
 
   const profileId = formData.get("profileId") as string;
   const projectName = formData.get("projectName") as string;
   const projectDescription = formData.get("projectDescription") as string;
-  const projectUrl = formData.get("file") as string;
+  const projectUrl = formData.get("projectUrl") as string;
   const file = formData.get("file") as File;
 
-  const generateId = randomUUID();
-  // upload image -> /image/image.png
-  const storageRef = storage.file(`project-images/${profileId}/${generateId}`);
+  const generatedId = randomUUID();
+
+  const storageRef = storage.file(`project-images/${profileId}/${generatedId}`);
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   await storageRef.save(buffer);
@@ -30,17 +29,19 @@ export async function createProject(formData: FormData) {
       .collection("projects")
       .doc(profileId)
       .collection("projects")
-      .doc(generateId)
+      .doc()
       .set({
         userId: session.user?.id,
         projectName,
         projectDescription,
         projectUrl,
         imagePath,
-        createAt: Timestamp.now().toMillis(),
+        createdAt: Timestamp.now().toMillis(),
       });
+
+    return true;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return false;
   }
 }

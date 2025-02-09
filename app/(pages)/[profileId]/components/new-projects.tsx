@@ -5,18 +5,20 @@ import Button from "@/app/components/ui/button";
 import Modal from "@/app/components/ui/modal";
 import TextArea from "@/app/components/ui/text-area";
 import TextInput from "@/app/components/ui/text-input";
-import { compressFile } from "@/app/lib/utils";
-import { create } from "domain";
+import { compressFiles } from "@/app/lib/utils";
 import { ArrowUpFromLine, Plus } from "lucide-react";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { startTransition, useState } from "react";
 
-export default function NewProjects(profileId: { profileId: string }) {
+export default function NewProjects({ profileId }: { profileId: string }) {
+  const router = useRouter();
+
   const [isOpen, setIsOpen] = useState(false);
-  const [projectName, setProjetName] = useState("");
-  const [projectDescription, setProjetDescription] = useState("");
-  const [projectUrl, setProjetUrl] = useState("");
-  const [projectImage, setProjetImage] = useState<string | null>("");
-  const [isCreatingProject, setIsCreatingProject] = useState(true);
+  const [projectName, setProjectName] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
+  const [projectUrl, setProjectUrl] = useState("");
+  const [projectImage, setProjectImage] = useState<string | null>(null);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   const handleOpenModal = () => {
     setIsOpen(true);
@@ -28,36 +30,43 @@ export default function NewProjects(profileId: { profileId: string }) {
 
   function handleImageInput(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
-
     if (file) {
       const imageURL = URL.createObjectURL(file);
       return imageURL;
     }
-
     return null;
   }
 
-  async function handleSaveProject() {
+  async function handleCreateProject() {
     setIsCreatingProject(true);
-
-    const imageInput = document.getElementById(
+    const imagesInput = document.getElementById(
       "imageInput"
     ) as HTMLInputElement;
 
-    if (!imageInput.files) return;
+    if (!imagesInput.files?.length) return;
 
-    const files = Array.from(imageInput.files);
-    const compressedFiles = await compressFile(files);
+    const compressedFile = await compressFiles(Array.from(imagesInput.files));
 
     const formData = new FormData();
 
-    formData.append("images", compressedFiles[0]);
-    formData.append("projectId", profileId.profileId);
+    formData.append("file", compressedFile[0]);
+    formData.append("profileId", profileId);
     formData.append("projectName", projectName);
     formData.append("projectDescription", projectDescription);
     formData.append("projectUrl", projectUrl);
 
     await createProject(formData);
+
+    startTransition(() => {
+      setIsOpen(false);
+      setIsCreatingProject(false);
+      setProjectName("");
+      setProjectDescription("");
+      setProjectUrl("");
+      setProjectImage(null);
+
+      router.refresh();
+    });
   }
 
   return (
@@ -102,7 +111,7 @@ export default function NewProjects(profileId: { profileId: string }) {
                 id="imageInput"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => setProjetImage(handleImageInput(e))}
+                onChange={(e) => setProjectImage(handleImageInput(e))}
               />
             </div>
 
@@ -116,7 +125,7 @@ export default function NewProjects(profileId: { profileId: string }) {
                   id="project-name"
                   placeholder="Digite o nome do projeto"
                   value={projectName}
-                  onChange={(e) => setProjetName(e.target.value)}
+                  onChange={(e) => setProjectName(e.target.value)}
                 />
               </div>
 
@@ -133,7 +142,7 @@ export default function NewProjects(profileId: { profileId: string }) {
                   placeholder="Digite a descrição do projeto."
                   className="h-36"
                   value={projectDescription}
-                  onChange={(e) => setProjetDescription(e.target.value)}
+                  onChange={(e) => setProjectDescription(e.target.value)}
                 />
               </div>
 
@@ -146,7 +155,7 @@ export default function NewProjects(profileId: { profileId: string }) {
                   placeholder="Digite a URL do seu projeto"
                   type="url"
                   value={projectUrl}
-                  onChange={(e) => setProjetUrl(e.target.value)}
+                  onChange={(e) => setProjectUrl(e.target.value)}
                 />
               </div>
             </div>
@@ -159,9 +168,7 @@ export default function NewProjects(profileId: { profileId: string }) {
             >
               Voltar
             </button>
-            <Button onClick={handleSaveProject} disabled={isCreatingProject}>
-              Salvar
-            </Button>
+            <Button onClick={handleCreateProject}>Salvar</Button>
           </div>
         </div>
       </Modal>
