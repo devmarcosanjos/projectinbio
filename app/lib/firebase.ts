@@ -2,6 +2,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 import "server-only";
+import { fileURLToPath } from "url";
 
 const privateKeyFormatted = process.env
   .AUTH_FIREBASE_PRIVATE_KEY64!.split(String.raw`\n`)
@@ -24,3 +25,16 @@ if (!getApps().length) {
 export const db = getFirestore();
 
 export const storage = getStorage().bucket();
+
+export async function getDownloadUrlFromPath(path: string) {
+  if (!path) return;
+
+  const file = storage.file(path);
+
+  const [url] = await file.getSignedUrl({
+    action: "read",
+    expires: "01-01-2500",
+  });
+
+  return url;
+}

@@ -3,7 +3,11 @@ import ProjectCard from "@/app/components/commons/project-card";
 import TotalVisits from "@/app/components/commons/total-visits";
 import UserCard from "@/app/components/commons/user-card";
 import { auth } from "@/app/lib/auth";
-import { getProfileData } from "@/app/server/get-profile-data";
+import { getDownloadUrlFromPath } from "@/app/lib/firebase";
+import {
+  getProfileData,
+  getProfileProjects,
+} from "@/app/server/get-profile-data";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -24,6 +28,7 @@ export default async function ProfilePage({
   const isOwner = profileData.userId === session?.user?.id;
 
   // TODO: add page view
+  const projects = await getProfileProjects(profileId);
 
   // Se user nao estiver mias no trial, nao deixar ver o prpjeto. Direcionar para pagamento
 
@@ -42,11 +47,14 @@ export default async function ProfilePage({
       </div>
 
       <div className="w-full flex justify-center content-start gap-4 flex-wrap overflow-auto">
-        <ProjectCard />
-        <ProjectCard />
-        <ProjectCard />
-        <ProjectCard />
-        <ProjectCard />
+        {projects.map(async (project) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            isOwner={isOwner}
+            img={await getDownloadUrlFromPath(project.imagePath)}
+          />
+        ))}
         {isOwner && <NewProjects profileId={profileId} />}
       </div>
 
