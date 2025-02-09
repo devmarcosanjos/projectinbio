@@ -1,4 +1,8 @@
+import { rejects } from "assert";
+import imageCompression from "browser-image-compression";
 import clsx, { ClassValue } from "clsx";
+import { Files, FileType } from "lucide-react";
+import { resolve } from "path";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -13,3 +17,29 @@ export function sanitizeLink(link?: string) {
     .replace(/[!@#$%^&*()_+\-=\[\]{};':"\\|,ˆ.<>\/?]+/, "")
     .toLocaleLowerCase();
 }
+
+export async function compressFile(files: File[]) {
+  const compressPromises = files.map(async (file) => {
+    try {
+      return await compressImage(file);
+    } catch (error) {
+      return null;
+    }
+  });
+
+  return (await Promise.all(compressPromises)).filter((file) => file !== null);
+}
+export const compressImage = (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const options = {
+      maxSizeMB: 0.2, // 200kb
+      maxWidthOrHeight: 900,
+      useWebWorker: true,
+      FileType: "image/png",
+    };
+
+    imageCompression(file, options).then((compressFile) => {
+      resolve(compressFile);
+    });
+  });
+};

@@ -1,9 +1,12 @@
 "use client";
 
+import { createProject } from "@/app/actions/create-project";
 import Button from "@/app/components/ui/button";
 import Modal from "@/app/components/ui/modal";
 import TextArea from "@/app/components/ui/text-area";
 import TextInput from "@/app/components/ui/text-input";
+import { compressFile } from "@/app/lib/utils";
+import { create } from "domain";
 import { ArrowUpFromLine, Plus } from "lucide-react";
 import React, { useState } from "react";
 
@@ -13,6 +16,7 @@ export default function NewProjects(profileId: { profileId: string }) {
   const [projectDescription, setProjetDescription] = useState("");
   const [projectUrl, setProjetUrl] = useState("");
   const [projectImage, setProjetImage] = useState<string | null>("");
+  const [isCreatingProject, setIsCreatingProject] = useState(true);
 
   const handleOpenModal = () => {
     setIsOpen(true);
@@ -31,6 +35,29 @@ export default function NewProjects(profileId: { profileId: string }) {
     }
 
     return null;
+  }
+
+  async function handleSaveProject() {
+    setIsCreatingProject(true);
+
+    const imageInput = document.getElementById(
+      "imageInput"
+    ) as HTMLInputElement;
+
+    if (!imageInput.files) return;
+
+    const files = Array.from(imageInput.files);
+    const compressedFiles = await compressFile(files);
+
+    const formData = new FormData();
+
+    formData.append("images", compressedFiles[0]);
+    formData.append("projectId", profileId.profileId);
+    formData.append("projectName", projectName);
+    formData.append("projectDescription", projectDescription);
+    formData.append("projectUrl", projectUrl);
+
+    await createProject(formData);
   }
 
   return (
@@ -79,6 +106,7 @@ export default function NewProjects(profileId: { profileId: string }) {
               />
             </div>
 
+            {/* Titulo */}
             <div className="flex flex-col gap-4 w-[293px]">
               <div className="flex flex-col gap-1">
                 <label htmlFor="project-name" className="text-white font-bold">
@@ -87,9 +115,12 @@ export default function NewProjects(profileId: { profileId: string }) {
                 <TextInput
                   id="project-name"
                   placeholder="Digite o nome do projeto"
+                  value={projectName}
+                  onChange={(e) => setProjetName(e.target.value)}
                 />
               </div>
 
+              {/*  Descrição */}
               <div className="flex flex-col gap-1 ">
                 <label
                   htmlFor="project-description"
@@ -101,6 +132,8 @@ export default function NewProjects(profileId: { profileId: string }) {
                   id="project-description"
                   placeholder="Digite a descrição do projeto."
                   className="h-36"
+                  value={projectDescription}
+                  onChange={(e) => setProjetDescription(e.target.value)}
                 />
               </div>
 
@@ -112,14 +145,23 @@ export default function NewProjects(profileId: { profileId: string }) {
                   id="project-url"
                   placeholder="Digite a URL do seu projeto"
                   type="url"
+                  value={projectUrl}
+                  onChange={(e) => setProjetUrl(e.target.value)}
                 />
               </div>
             </div>
           </div>
 
           <div className="flex gap-4 justify-end">
-            <button className="font-bold text-white">Voltar</button>
-            <Button>Salvar</Button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="font-bold text-white"
+            >
+              Voltar
+            </button>
+            <Button onClick={handleSaveProject} disabled={isCreatingProject}>
+              Salvar
+            </Button>
           </div>
         </div>
       </Modal>
